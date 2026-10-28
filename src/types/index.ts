@@ -8,6 +8,7 @@ export type NodeType =
 
 export type ParameterCategory =
   | "device"
+  | "capacity"
   | "phase"
   | "location"
   | "condition"
@@ -16,6 +17,7 @@ export type ParameterCategory =
   | "other";
 
 export interface MeshNodeData {
+  [key: string]: unknown;
   label: string;
   type: NodeType;
   category?: ParameterCategory;

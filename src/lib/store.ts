@@ -46,6 +46,7 @@ export const useMeshStore = create<MeshState>((set, get) => ({
   nodes: [],
   edges: [],
   selectedNodeId: null,
+  appliedMitigations: [],
 
   setNodes: (nodes) => set({ nodes }),
   setEdges: (edges) => set({ edges }),

@@ -7,7 +7,7 @@ import {
   Controls,
   MiniMap,
   ReactFlowProvider,
-  getIncomers,
+  type NodeTypes,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
@@ -22,7 +22,7 @@ import RiskPanel from "./RiskPanel";
 const nodeTypes = {
   scenarioNode: ScenarioNode,
   parameterNode: ParameterNode,
-};
+} as NodeTypes;
 
 const MeshExplorerInner = () => {
   const {
@@ -72,9 +72,9 @@ const MeshExplorerInner = () => {
           edgeSet.add(e.id);
           return nodes.find((n) => n.id === e.source);
         })
-        .filter(Boolean);
+        .filter((n): n is NonNullable<typeof n> => Boolean(n));
       if (incomers.length === 0) break;
-      currentId = incomers[0].id;
+      currentId = incomers[0]!.id;
     }
 
     return { highlightedNodes: nodeSet, highlightedEdges: edgeSet };
@@ -84,19 +84,20 @@ const MeshExplorerInner = () => {
     (nodeId: string): string[] => {
       const used: string[] = [];
       const visited = new Set<string>();
-      let currentId = nodeId;
+      let currentId: string | undefined = nodeId;
 
       // Walk up to root following incomers
       while (currentId && !visited.has(currentId)) {
         visited.add(currentId);
         const currentNode = nodes.find((n) => n.id === currentId);
-        if (currentNode?.data?.category) {
+        if (!currentNode) break;
+        if (currentNode.data?.category) {
           used.push(currentNode.data.category);
         }
-        if (currentNode?.type === "scenarioNode") break;
-        const incomers = getIncomers(currentNode, nodes, edges);
-        if (incomers.length === 0) break;
-        currentId = incomers[0].id;
+        if (currentNode.type === "scenarioNode") break;
+        const incomingEdge = edges.find((e) => e.target === currentId);
+        if (!incomingEdge) break;
+        currentId = incomingEdge.source;
       }
       return used;
     },
