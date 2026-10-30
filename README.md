@@ -9,7 +9,7 @@ An interactive tool for exploring lithium battery risk scenarios in aviation. Bu
 - **Scenario register** — 20 seeded scenarios from the Class 9 lithium battery register (LB-001 to LB-056 range)
 - **Build from device** — start from a device (phone, laptop, power bank, vape, mobility aid, drone, etc.) and branch outward
 - **Right-click a node** — add a parameter branch. Each parameter type may appear only once per path
-- **Double-click a node** — apply mitigations (containment bag, fire gloves, cooling, monitoring, etc.)
+- **Double-click a node** — apply mitigations (containment bag, fire gloves, cooling, monitoring, etc.). Applying on a node propagates to the whole branch below it, and nodes show how many mitigations they inherit
 - **Path highlighting** — selecting a node highlights the full branch back to its root
 - **Live risk assessment** — severity, probability, barrier effectiveness, risk score, tolerability and decision guidance based on the 5×5 matrix in `riskMatrix.pdf`
 - **Risk differentiation** — battery energy (Wh), accessibility, flight phase, fire load and condition all shift the calculated risk
@@ -26,7 +26,7 @@ Base severity/probability is set by the root scenario, then modified by:
 | Device type | Fire load weighting by device/chemistry |
 | Condition | Damaged, trapped, charging, overheating, smoke, thermal runaway escalate risk |
 | Quantity | Multiple batteries increase fire load |
-| Mitigations | Applied mitigations reduce severity/probability and improve barriers |
+| Mitigations | Applied mitigations reduce severity/probability and improve barriers, and propagate down the branch |
 
 Risk levels map to the provided matrix: Low (acceptable), Medium (tolerable), High and Very High (intolerable), each with matching investigation/action requirements.
 

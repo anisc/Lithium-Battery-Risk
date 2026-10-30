@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useMeshStore } from "@/lib/store";
 import { assessPathRisk } from "@/lib/riskCalculator";
+import { getScopedMitigations } from "@/lib/mitigationScope";
 
 const RiskPanel = () => {
   const nodes = useMeshStore((state) => state.nodes);
@@ -9,10 +10,11 @@ const RiskPanel = () => {
   const appliedMitigations = useMeshStore((state) => state.appliedMitigations);
   const removeMitigation = useMeshStore((state) => state.removeMitigation);
 
+  // Mitigations applied anywhere on this branch carry down to the whole branch.
   const mitigationsForPath = useMemo(() => {
-    if (!selectedNodeId || !appliedMitigations) return [];
-    return appliedMitigations.filter((m) => m.nodeId === selectedNodeId);
-  }, [selectedNodeId, appliedMitigations]);
+    if (!selectedNodeId) return [];
+    return getScopedMitigations(nodes, edges, appliedMitigations, selectedNodeId);
+  }, [selectedNodeId, nodes, edges, appliedMitigations]);
 
   const riskResult = useMemo(() => {
     if (!selectedNodeId) return null;
@@ -130,20 +132,39 @@ const RiskPanel = () => {
         {mitigationsForPath.length > 0 && (
           <div className="bg-gray-800 p-3 rounded border border-green-700">
             <div className="text-xs font-semibold text-green-400 uppercase mb-2">
-              Applied Mitigations
+              Active Mitigations ({mitigationsForPath.length})
             </div>
-            <div className="space-y-1">
+            <div className="space-y-2">
               {mitigationsForPath.map((mit) => (
-                <div key={mit.mitigationId} className="flex items-center justify-between">
-                  <span className="text-xs text-green-300">✓ {mit.mitigationName}</span>
+                <div
+                  key={`${mit.nodeId}-${mit.mitigationId}`}
+                  className="flex items-start justify-between gap-2"
+                >
+                  <div>
+                    <div className="text-xs text-green-300">
+                      ✓ {mit.mitigationName}
+                    </div>
+                    <div className="text-[10px] text-gray-500 mt-0.5">
+                      {mit.inherited ? (
+                        <span className="text-amber-400">
+                          Inherited from: {mit.originLabel}
+                        </span>
+                      ) : (
+                        <span>Applied on this node</span>
+                      )}
+                    </div>
+                  </div>
                   <button
-                    onClick={() => removeMitigation(selectedNodeId, mit.mitigationId)}
-                    className="text-xs text-red-400 hover:text-red-300"
+                    onClick={() => removeMitigation(mit.nodeId, mit.mitigationId)}
+                    className="text-xs text-red-400 hover:text-red-300 shrink-0"
                   >
                     Remove
                   </button>
                 </div>
               ))}
+            </div>
+            <div className="mt-2 pt-2 border-t border-green-900 text-[10px] text-gray-500">
+              Mitigations apply to the whole branch below where they are set.
             </div>
           </div>
         )}

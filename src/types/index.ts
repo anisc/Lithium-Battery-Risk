@@ -25,6 +25,8 @@ export interface MeshNodeData {
   scenarioId?: string;
   value?: string;
   metadata?: Record<string, any>;
+  mitigationCount?: number;
+  inheritedMitigationCount?: number;
 }
 
 export interface MeshEdgeData {

@@ -12,6 +12,7 @@ import {
 import "@xyflow/react/dist/style.css";
 
 import { useMeshStore } from "@/lib/store";
+import { getMitigationCounts } from "@/lib/mitigationScope";
 import ScenarioNode from "./graph/ScenarioNode";
 import ParameterNode from "./graph/ParameterNode";
 import ContextMenu from "./graph/ContextMenu";
@@ -33,6 +34,7 @@ const MeshExplorerInner = () => {
     onConnect,
     setSelectedNodeId,
     selectedNodeId,
+    appliedMitigations,
   } = useMeshStore();
 
   const [menu, setMenu] = useState<{
@@ -79,6 +81,31 @@ const MeshExplorerInner = () => {
 
     return { highlightedNodes: nodeSet, highlightedEdges: edgeSet };
   }, [selectedNodeId, nodes, edges]);
+
+  // Mitigation counts per node: own + inherited from upstream branch nodes
+  const mitigationCounts = useMemo(
+    () => getMitigationCounts(nodes, edges, appliedMitigations),
+    [nodes, edges, appliedMitigations]
+  );
+
+  const displayNodes = useMemo(
+    () =>
+      nodes.map((node) => {
+        const counts = mitigationCounts[node.id];
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            mitigationCount: counts?.own ?? 0,
+            inheritedMitigationCount: counts?.inherited ?? 0,
+          },
+          style: highlightedNodes.has(node.id)
+            ? { boxShadow: "0 0 0 3px #f59e0b", borderRadius: "8px" }
+            : undefined,
+        };
+      }),
+    [nodes, mitigationCounts, highlightedNodes]
+  );
 
   const getUsedCategoriesAlongPath = useCallback(
     (nodeId: string): string[] => {
@@ -160,12 +187,7 @@ const MeshExplorerInner = () => {
       <Sidebar />
       <div className="flex-1 h-full" ref={ref}>
         <ReactFlow
-          nodes={nodes.map((node) => ({
-            ...node,
-            style: highlightedNodes.has(node.id)
-              ? { boxShadow: "0 0 0 3px #f59e0b", borderRadius: "8px" }
-              : undefined,
-          }))}
+          nodes={displayNodes}
           edges={edges.map((edge) => ({
             ...edge,
             style: highlightedEdges.has(edge.id)
