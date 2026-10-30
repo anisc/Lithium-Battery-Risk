@@ -2,14 +2,34 @@ export type SeverityLevel = 1 | 2 | 3 | 4 | 5;
 export type ProbabilityLevel = 1 | 2 | 3 | 4 | 5;
 export type BarrierEffectiveness = 1 | 2 | 3 | 4 | 5;
 
+export type FactorCategory =
+  | "Base"
+  | "Device"
+  | "Capacity"
+  | "Location"
+  | "Phase"
+  | "Condition"
+  | "Quantity"
+  | "Charging"
+  | "Compound"
+  | "Mitigation"
+  | "Other";
+
+export interface FactorRecord {
+  key: string;
+  category: FactorCategory;
+  label: string;
+  severityDelta: number;
+  probabilityDelta: number;
+  barrierDelta: number;
+  note?: string;
+  compound?: boolean;
+}
+
 export interface RiskFactors {
   severity: SeverityLevel;
   probability: ProbabilityLevel;
   barrierEffectiveness: BarrierEffectiveness;
-  accessDifficulty: number; // 0-1
-  phaseCriticality: number; // 0-1
-  fireLoad: number; // 0-1
-  detectionDifficulty: number; // 0-1
 }
 
 export interface RiskResult {
@@ -21,8 +41,7 @@ export interface RiskResult {
   tolerability: "Acceptable" | "Tolerable" | "Intolerable";
   actionsRequired: string;
   breakdown: {
-    factors: string[];
-    modifiers: string[];
+    factors: FactorRecord[];
   };
 }
 

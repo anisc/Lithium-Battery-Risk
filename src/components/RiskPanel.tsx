@@ -3,6 +3,27 @@ import { useMeshStore } from "@/lib/store";
 import { assessPathRisk } from "@/lib/riskCalculator";
 import { getScopedMitigations } from "@/lib/mitigationScope";
 
+/**
+ * Renders a delta cell. For severity/probability a decrease is good; for
+ * barriers an increase is good, hence `positiveIsGood`.
+ */
+const Delta = ({
+  value,
+  positiveIsGood = false,
+}: {
+  value: number;
+  positiveIsGood?: boolean;
+}) => {
+  if (!value) return <span className="text-gray-600">·</span>;
+  const isGood = positiveIsGood ? value > 0 : value < 0;
+  const text = value > 0 ? `+${value}` : `${value}`;
+  return (
+    <span className={isGood ? "text-green-400 font-medium" : "text-red-400 font-medium"}>
+      {text}
+    </span>
+  );
+};
+
 const RiskPanel = () => {
   const nodes = useMeshStore((state) => state.nodes);
   const edges = useMeshStore((state) => state.edges);
@@ -91,34 +112,90 @@ const RiskPanel = () => {
         </div>
 
         <div className="bg-gray-800 p-3 rounded border border-gray-700">
-          <div className="text-xs font-semibold text-gray-400 uppercase mb-2">
-            Contributing Factors
-          </div>
-          <ul className="space-y-1">
-            {riskResult.breakdown.factors.map((f, i) => (
-              <li key={i} className="text-xs text-gray-300 flex items-start gap-1">
-                <span className="text-blue-400">•</span>
-                <span>{f}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {riskResult.breakdown.modifiers.length > 0 && (
-          <div className="bg-gray-800 p-3 rounded border border-gray-700">
-            <div className="text-xs font-semibold text-gray-400 uppercase mb-2">
-              Risk Modifiers
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-xs font-semibold text-gray-400 uppercase">
+              Risk Breakdown
             </div>
-            <ul className="space-y-1">
-              {riskResult.breakdown.modifiers.map((m, i) => (
-                <li key={i} className="text-xs text-yellow-300 flex items-start gap-1">
-                  <span>⚠</span>
-                  <span>{m}</span>
-                </li>
-              ))}
-            </ul>
+            <div className="text-[10px] text-gray-500">
+              {riskResult.breakdown.factors.length} inputs
+            </div>
           </div>
-        )}
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="text-gray-500">
+                <th className="text-left font-normal pb-1">Factor</th>
+                <th className="text-center font-normal pb-1 w-8" title="Severity">S</th>
+                <th className="text-center font-normal pb-1 w-8" title="Probability">P</th>
+                <th className="text-center font-normal pb-1 w-8" title="Barriers">B</th>
+              </tr>
+            </thead>
+            <tbody>
+              {riskResult.breakdown.factors.map((factor) => {
+                const isBase = factor.category === "Base";
+                const isMitigation = factor.category === "Mitigation";
+                const isCompound = factor.compound;
+                return (
+                  <tr
+                    key={factor.key}
+                    className={`align-top border-t border-gray-700/60 ${
+                      isBase ? "bg-gray-900/40" : ""
+                    }`}
+                  >
+                    <td className="py-1.5 pr-1">
+                      <div
+                        className={`leading-tight ${
+                          isBase
+                            ? "text-blue-300 font-medium"
+                            : isMitigation
+                              ? "text-green-300"
+                              : isCompound
+                                ? "text-amber-300 font-medium"
+                                : "text-gray-200"
+                        }`}
+                      >
+                        {factor.label}
+                      </div>
+                      {factor.note && (
+                        <div className="text-[10px] text-gray-500 mt-0.5 leading-snug">
+                          {factor.note}
+                        </div>
+                      )}
+                    </td>
+                    <td className="py-1.5 text-center">
+                      <Delta value={factor.severityDelta} />
+                    </td>
+                    <td className="py-1.5 text-center">
+                      <Delta value={factor.probabilityDelta} />
+                    </td>
+                    <td className="py-1.5 text-center">
+                      <Delta value={factor.barrierDelta} positiveIsGood />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot>
+              <tr className="border-t-2 border-gray-600 font-semibold">
+                <td className="pt-1.5 text-gray-300">Result</td>
+                <td className="pt-1.5 text-center text-white">
+                  {riskResult.severity}
+                </td>
+                <td className="pt-1.5 text-center text-white">
+                  {riskResult.probability}
+                </td>
+                <td className="pt-1.5 text-center text-white">
+                  {riskResult.barrierEffectiveness}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+          <div className="mt-2 pt-2 border-t border-gray-700 text-[10px] text-gray-500 leading-snug">
+            S = severity, P = probability, B = barrier effectiveness (higher is
+            better). The scenario is clamped to 1–5 before mitigations are
+            applied, so a mitigation always shows its effect even when the
+            scenario already saturates the matrix.
+          </div>
+        </div>
 
         <div className="bg-gray-800 p-3 rounded border border-gray-700">
           <div className="text-xs font-semibold text-gray-400 uppercase mb-2">

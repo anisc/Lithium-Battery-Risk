@@ -12,6 +12,7 @@ An interactive tool for exploring lithium battery risk scenarios in aviation. Bu
 - **Double-click a node** — apply mitigations (containment bag, fire gloves, cooling, monitoring, etc.). Applying on a node propagates to the whole branch below it, and nodes show how many mitigations they inherit
 - **Path highlighting** — selecting a node highlights the full branch back to its root
 - **Live risk assessment** — severity, probability, barrier effectiveness, risk score, tolerability and decision guidance based on the 5×5 matrix in `riskMatrix.pdf`
+- **Itemised risk breakdown** — every input shown as a row with its own severity/probability/barrier delta, so the score can be audited rather than taken on trust
 - **Risk differentiation** — battery energy (Wh), accessibility, flight phase, fire load and condition all shift the calculated risk
 
 ## How risk is calculated
@@ -27,6 +28,8 @@ Base severity/probability is set by the root scenario, then modified by:
 | Condition | Damaged, trapped, charging, overheating, smoke, thermal runaway escalate risk |
 | Quantity | Multiple batteries increase fire load |
 | Mitigations | Applied mitigations reduce severity/probability and improve barriers, and propagate down the branch |
+
+Each factor carries explicit deltas (e.g. `Location: Between Seats · P +1 · B −1`), plus compound rows when thresholds are crossed (accumulated fire load above 1.00, thermal event in an inaccessible location, barriers weak/strong). The panel renders these as a table ending in the resulting S/P/B values, so the arithmetic is visible and reviewable.
 
 Risk levels map to the provided matrix: Low (acceptable), Medium (tolerable), High and Very High (intolerable), each with matching investigation/action requirements.
 
